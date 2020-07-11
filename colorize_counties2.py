@@ -5,15 +5,33 @@ reader = csv.reader(open('unemployment-aug2010.txt', 'r'), delimiter=',')
 svg = open('USA_Counties_with_FIPS_and_names.svg', 'r').read()
 
 unemployment = {}
+rates_only = []
+past_header = False
 min_value = 100
 max_value = 0
 for row in reader:
+    if not past_header:
+        past_header = True
+        continue
+
     try:
         full_fips = 'FIPS_' + row[1] + row[2]
         rate = float(row[5].strip())
         unemployment[full_fips] = rate
+        rates_only.append(rate)
     except:
         pass
+
+# Quartiles
+rates_only.sort()
+q1_index = int(0.25*len(rates_only))
+q1 = rates_only[q1_index]
+
+q2_index = int(0.5*len(rates_only))
+q2 = rates_only[q2_index]
+
+q3_index = int(0.75 * len(rates_only))
+q3 = rates_only[q3_index]
 
 soup = BeautifulSoup(svg, 'xml')
 paths = soup.findAll('path')
@@ -29,11 +47,11 @@ for p in paths:
             rate = unemployment[p['id']]
         except:
             continue
-        if rate > 10.8:
+        if rate > q3:
             color_class = 3
-        elif rate > 8.7:
+        elif rate > q2:
             color_class = 2
-        elif rate > 6.9:
+        elif rate > q1:
             color_class = 1
         else:
             color_class = 0
